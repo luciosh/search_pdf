@@ -63,7 +63,8 @@ def buscar():
         messagebox.showerror("Erro", "Por favor, selecione uma pasta com PDFs.")
         return
     
-    label_resultado.config(text="Buscando, por favor, aguarde...")
+    text_resultado.delete(1.0, tk.END)
+    text_resultado.insert(tk.END, "Buscando, por favor, aguarde...")
     root.update()
     
     try:
@@ -77,14 +78,14 @@ def buscar():
             texto_resultado = f"Nome '{nome}' não encontrado em nenhum PDF da pasta."
         
         print(f"Resultado da busca: {texto_resultado}")
-        label_resultado.config(text=texto_resultado)
-        root.update()
+        text_resultado.delete(1.0, tk.END)
+        text_resultado.insert(tk.END, texto_resultado)
     except Exception as e:
         erro = f"Ocorreu um erro durante a busca: {str(e)}"
         print(f"Erro: {erro}")
         messagebox.showerror("Erro", erro)
-        label_resultado.config(text="Erro durante a busca.")
-        root.update()
+        text_resultado.delete(1.0, tk.END)
+        text_resultado.insert(tk.END, "Erro durante a busca.")
     
     print("Função buscar concluída")
 
@@ -93,7 +94,7 @@ root = tk.Tk()
 root.title("Busca de Nomes no PDF")
 
 # Configurando a janela
-root.geometry("400x200")
+root.geometry("400x500")
 
 # Nome a ser buscado
 tk.Label(root, text="Nome a ser buscado:").pack(pady=5)
@@ -112,11 +113,14 @@ btn_pdf.pack(pady=5)
 btn_buscar = tk.Button(root, text="Buscar", command=buscar)
 btn_buscar.pack(pady=10)
 
-# Label de resultado
-label_resultado = tk.Label(root, text="", wraplength=380)  # Adicione wraplength
-label_resultado.pack(pady=5, padx=10)  # Adicione padx
+# Criando um widget Text para exibir os resultados com barra de rolagem
+text_resultado = tk.Text(root, wrap=tk.WORD, height=10, width=50)
+text_resultado.pack(pady=5, padx=10, fill=tk.BOTH, expand=True)
+
+# Adicionando uma barra de rolagem ao widget Text
+scrollbar = tk.Scrollbar(root, command=text_resultado.yview)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+text_resultado.config(yscrollcommand=scrollbar.set)
 
 # Executar a interface
 root.mainloop()
-
-print("Interface iniciada")
