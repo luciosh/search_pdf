@@ -36,6 +36,23 @@ def buscar_nome_em_pasta(nome, pasta_path):
                 resultados[arquivo] = paginas
     return resultados
 
+# Função para extrair páginas e criar novo PDF
+def extrair_paginas(resultados, pasta_saida):
+    merger = PyPDF2.PdfMerger()
+    
+    for arquivo, paginas in resultados.items():
+        pdf_path = os.path.join(entry_pdf.get(), arquivo)
+        with open(pdf_path, 'rb') as file:
+            reader = PyPDF2.PdfReader(file)
+            for pagina in paginas:
+                merger.append(fileobj=file, pages=(pagina-1, pagina))
+    
+    nome_arquivo = f"resultado_busca_{entry_nome.get()}.pdf"
+    caminho_saida = os.path.join(pasta_saida, nome_arquivo)
+    merger.write(caminho_saida)
+    merger.close()
+    return caminho_saida
+
 # Função para abrir o diálogo de seleção de arquivo
 def selecionar_pdf():
     file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
@@ -50,17 +67,28 @@ def selecionar_pasta():
         entry_pdf.delete(0, tk.END)
         entry_pdf.insert(0, folder_path)
 
+# Função para selecionar a pasta de saída
+def selecionar_pasta_saida():
+    folder_path = filedialog.askdirectory()
+    if folder_path:
+        entry_saida.delete(0, tk.END)
+        entry_saida.insert(0, folder_path)
+
 # Função para buscar o nome no PDF e mostrar o resultado
 def buscar():
     print("Função buscar iniciada")
     nome = entry_nome.get().strip()
     pasta_path = entry_pdf.get().strip()
+    pasta_saida = entry_saida.get().strip()
     
     if not nome:
         messagebox.showerror("Erro", "Por favor, insira o nome a ser buscado.")
         return
     if not pasta_path:
         messagebox.showerror("Erro", "Por favor, selecione uma pasta com PDFs.")
+        return
+    if not pasta_saida:
+        messagebox.showerror("Erro", "Por favor, selecione uma pasta de saída.")
         return
     
     text_resultado.delete(1.0, tk.END)
@@ -74,6 +102,9 @@ def buscar():
             texto_resultado = f"Nome '{nome}' encontrado nos seguintes arquivos:\n\n"
             for arquivo, paginas in resultados.items():
                 texto_resultado += f"{arquivo}: páginas {', '.join(map(str, paginas))}\n"
+            
+            caminho_saida = extrair_paginas(resultados, pasta_saida)
+            texto_resultado += f"\nNovo PDF criado: {caminho_saida}"
         else:
             texto_resultado = f"Nome '{nome}' não encontrado em nenhum PDF da pasta."
         
@@ -94,7 +125,7 @@ root = tk.Tk()
 root.title("Busca de Nomes no PDF")
 
 # Configurando a janela
-root.geometry("400x500")
+root.geometry("400x600")
 
 # Nome a ser buscado
 tk.Label(root, text="Nome a ser buscado:").pack(pady=5)
@@ -108,6 +139,14 @@ entry_pdf.pack()
 
 btn_pdf = tk.Button(root, text="Selecionar Pasta", command=selecionar_pasta)
 btn_pdf.pack(pady=5)
+
+# Selecionar pasta de saída
+tk.Label(root, text="Selecione a pasta de saída:").pack(pady=5)
+entry_saida = tk.Entry(root, width=40)
+entry_saida.pack()
+
+btn_saida = tk.Button(root, text="Selecionar Pasta de Saída", command=selecionar_pasta_saida)
+btn_saida.pack(pady=5)
 
 # Botão para buscar
 btn_buscar = tk.Button(root, text="Buscar", command=buscar)
