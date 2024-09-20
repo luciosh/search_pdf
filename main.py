@@ -2,6 +2,7 @@ import PyPDF2
 import re
 import tkinter as tk
 from tkinter import filedialog, messagebox
+import os
 
 # Função para buscar o nome no PDF e retornar as páginas onde ele está presente
 def buscar_nome(nome, pdf_path):
@@ -21,6 +22,17 @@ def buscar_nome(nome, pdf_path):
 
         return paginas_encontradas
 
+# Função para buscar o nome em todos os PDFs de uma pasta
+def buscar_nome_em_pasta(nome, pasta_path):
+    resultados = {}
+    for arquivo in os.listdir(pasta_path):
+        if arquivo.lower().endswith('.pdf'):
+            pdf_path = os.path.join(pasta_path, arquivo)
+            paginas = buscar_nome(nome, pdf_path)
+            if paginas:
+                resultados[arquivo] = paginas
+    return resultados
+
 # Função para abrir o diálogo de seleção de arquivo
 def selecionar_pdf():
     file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
@@ -28,39 +40,48 @@ def selecionar_pdf():
         entry_pdf.delete(0, tk.END)
         entry_pdf.insert(0, file_path)
 
+# Função para selecionar a pasta
+def selecionar_pasta():
+    folder_path = filedialog.askdirectory()
+    if folder_path:
+        entry_pdf.delete(0, tk.END)
+        entry_pdf.insert(0, folder_path)
+
 # Função para buscar o nome no PDF e mostrar o resultado
 def buscar():
     print("Função buscar iniciada")
     nome = entry_nome.get().strip()
-    pdf_path = entry_pdf.get().strip()
+    pasta_path = entry_pdf.get().strip()
     
     if not nome:
         messagebox.showerror("Erro", "Por favor, insira o nome a ser buscado.")
         return
-    if not pdf_path:
-        messagebox.showerror("Erro", "Por favor, selecione um arquivo PDF.")
+    if not pasta_path:
+        messagebox.showerror("Erro", "Por favor, selecione uma pasta com PDFs.")
         return
     
     label_resultado.config(text="Buscando, por favor, aguarde...")
     root.update()
     
     try:
-        paginas = buscar_nome(nome, pdf_path)
+        resultados = buscar_nome_em_pasta(nome, pasta_path)
         
-        if paginas:
-            resultado = f"Nome '{nome}' encontrado nas páginas: {', '.join(map(str, paginas))}"
+        if resultados:
+            texto_resultado = f"Nome '{nome}' encontrado nos seguintes arquivos:\n\n"
+            for arquivo, paginas in resultados.items():
+                texto_resultado += f"{arquivo}: páginas {', '.join(map(str, paginas))}\n"
         else:
-            resultado = f"Nome '{nome}' não encontrado no PDF."
+            texto_resultado = f"Nome '{nome}' não encontrado em nenhum PDF da pasta."
         
-        print(f"Resultado da busca: {resultado}")  # Adicione esta linha para debug
-        label_resultado.config(text=resultado)
-        root.update()  # Adicione esta linha para forçar a atualização da interface
+        print(f"Resultado da busca: {texto_resultado}")
+        label_resultado.config(text=texto_resultado)
+        root.update()
     except Exception as e:
         erro = f"Ocorreu um erro durante a busca: {str(e)}"
-        print(f"Erro: {erro}")  # Adicione esta linha para debug
+        print(f"Erro: {erro}")
         messagebox.showerror("Erro", erro)
         label_resultado.config(text="Erro durante a busca.")
-        root.update()  # Adicione esta linha para forçar a atualização da interface
+        root.update()
     
     print("Função buscar concluída")
 
@@ -76,12 +97,12 @@ tk.Label(root, text="Nome a ser buscado:").pack(pady=5)
 entry_nome = tk.Entry(root, width=40)
 entry_nome.pack()
 
-# Selecionar PDF
-tk.Label(root, text="Selecione o PDF:").pack(pady=5)
+# Selecionar pasta
+tk.Label(root, text="Selecione a pasta com PDFs:").pack(pady=5)
 entry_pdf = tk.Entry(root, width=40)
 entry_pdf.pack()
 
-btn_pdf = tk.Button(root, text="Selecionar PDF", command=selecionar_pdf)
+btn_pdf = tk.Button(root, text="Selecionar Pasta", command=selecionar_pasta)
 btn_pdf.pack(pady=5)
 
 # Botão para buscar
