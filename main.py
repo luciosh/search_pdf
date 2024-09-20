@@ -16,8 +16,11 @@ def buscar_nome(nome, pdf_path):
             page = reader.pages[page_num]
             texto = page.extract_text()
             
+            # Remover quebras de linha e espaços extras
+            texto_limpo = re.sub(r'\s+', ' ', texto)
+            
             # Busca o nome (case-insensitive) na página
-            if re.search(r'\b' + re.escape(nome) + r'\b', texto, re.IGNORECASE):
+            if re.search(r'\b' + re.escape(nome) + r'\b', texto_limpo, re.IGNORECASE):
                 paginas_encontradas.append(page_num + 1)  # Páginas começam em 1
 
         return paginas_encontradas
